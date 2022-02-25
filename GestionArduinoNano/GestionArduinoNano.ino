@@ -1,5 +1,7 @@
+#include <Adafruit_NeoPixel.h>
 #include <Arduino_FreeRTOS.h>
 #include <Servo.h>
+
 
 #define MouthServo 6 // pin du servo bouche
 #define LineIn 3 // pin LineIn
