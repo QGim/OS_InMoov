@@ -3,8 +3,10 @@
 #include <Servo.h>
 
 
-#define MouthServo 6 // pin du servo bouche
-#define LineIn A0 // pin LineIn
+#define MouthServoPin 6 // pin du servo bouche
+#define LineInPin A0 // pin LineIn
+#define NeoPixelPin 9 //
+#define NB_LEDS 16
 
 void SyncroVocal_Task(void*pvParameters);
 void NeoPixelLed_Task(void*pvParameters);
@@ -14,7 +16,7 @@ void InitVocalTask(void);
 void InitNeopixelLedTask(void);
 
 Servo obj_servoMouth;
-
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NB_LEDS, NeoPixelPin, NEO_GRB + NEO_KHZ800); //déclaration objet neopixel
 
 void setup()
 {
@@ -35,9 +37,9 @@ void InitGlobal(void)
 
 void InitVocalTask(void)
 {
-  Servo obj_servoMouth;
-  pinMode(MouthServo, OUTPUT);
-  obj_servoMouth.attach(MouthServo);
+
+  pinMode(MouthServoPin, OUTPUT);
+  obj_servoMouth.attach(MouthServoPin);
   obj_servoMouth.write(55);
 
   xTaskCreate(SyncroVocal_Task, "Vocal", 512, NULL, 2, NULL);
@@ -45,6 +47,9 @@ void InitVocalTask(void)
 
 void InitNeopixelLedTask(void)
 {
+  strip.begin();
+  strip.show(); // Initialize all pixels to 'off'
+
   xTaskCreate(NeoPixelLed_Task, "Noeopixel", 128, NULL, 2, NULL);
 }
 
@@ -52,6 +57,43 @@ void NeoPixelLed_Task(void*pvParameters)
 {
 
   (void)pvParameters;
+
+  int alpha = 0; // Current value of the pixels
+  int dir = 1; // Direction of the pixels... 1 = getting brighter, 0 = getting dimmer
+  int flip; // Randomly flip the direction every once in a while
+  int minAlpha = 25; // Min value of brightness
+  int maxAlpha = 100; // Max value of brightness
+  int alphaDelta = 5; // Delta of brightness between times through the loop
+
+  for (;;)
+  {
+    flip = random(32);
+    if (flip > 20) {
+      dir = 1 - dir;
+    }
+    // Some example procedures showing how to display to the pixels:
+    if (dir == 1) {
+      alpha += alphaDelta;
+    }
+    if (dir == 0) {
+      alpha -= alphaDelta;
+    }
+    if (alpha < minAlpha) {
+      alpha = minAlpha;
+      dir = 1;
+    }
+    if (alpha > maxAlpha) {
+      alpha = maxAlpha;
+      dir = 0;
+    }
+    // Change the line below to alter the color of the lights
+    // The numbers represent the Red, Green, and Blue values
+    // of the lights, as a value between 0(off) and 1(max brightness)
+    //
+    // EX:
+    //colorWipe(strip.Color(alpha, 0, alpha/2)); // Pink
+    colorWipe(strip.Color(0, 0, alpha)); // Blue
+  }
 }
 
 void SyncroVocal_Task(void*pvParameters)
@@ -74,69 +116,78 @@ void SyncroVocal_Task(void*pvParameters)
 
   for (;;)
   {
-   if (delayFlag == 0)
-  {
-    read_val = analogRead(LineIn);
-
-    if (read_val < 630 || read_val > 680 ) // recherche valeur entre 665 et 680 ( a ajuster si besoin )
-
-    {
-      boucheStatus = 1; // bouche fermée
-
-    }
-    else // tant que
-
-    {
-      i++; // la valeur entre 630 et 680 est pas trouvée
-    }
-
-    if (i >= secondDetection)
-    {
-      i = 0;
-      boucheStatus = 0;
-    }
-  }
-  if (boucheStatus == 0 && actionBouche == 0)
-  {
     if (delayFlag == 0)
     {
-      obj_servoMouth.write(95);
-      v_time = millis();
-      delayFlag = 1;
-    }
-    vTaskDelay(40); //1
+      read_val = analogRead(LineInPin);
 
-    if (v_time + v_delay < millis() and delayFlag == 1)
-    {
-      obj_servoMouth.write(55);
-      v_time = millis();
-      delayFlag = 2;
-    }
-    vTaskDelay(40); //2
+      if (read_val < 630 || read_val > 680 ) // recherche valeur entre 665 et 680 ( a ajuster si besoin )
 
-    if (v_time + v_delay < millis() and delayFlag == 2)
+      {
+        boucheStatus = 1; // bouche fermée
+
+      }
+      else // tant que
+
+      {
+        i++; // la valeur entre 630 et 680 est pas trouvée
+      }
+
+      if (i >= secondDetection)
+      {
+        i = 0;
+        boucheStatus = 0;
+      }
+    }
+    if (boucheStatus == 0 && actionBouche == 0)
     {
-      actionBouche = 1;
-      v_time = millis();
-      delayFlag = 0;
+      if (delayFlag == 0)
+      {
+        obj_servoMouth.write(95);
+        v_time = millis();
+        delayFlag = 1;
+      }
+      vTaskDelay(40); //1
+
+      if (v_time + v_delay < millis() and delayFlag == 1)
+      {
+        obj_servoMouth.write(55);
+        v_time = millis();
+        delayFlag = 2;
+      }
+      vTaskDelay(40); //2
+
+      if (v_time + v_delay < millis() and delayFlag == 2)
+      {
+        actionBouche = 1;
+        v_time = millis();
+        delayFlag = 0;
+      }
+    }
+
+    if ((boucheStatus == 1 && actionBouche == 1) or delayFlag == 3)
+    {
+      if (delayFlag == 0)
+      {
+        delayFlag = 3;
+        obj_servoMouth.write(55);
+        v_time = millis();
+        vTaskDelay(40); // 3
+      }
+      if (v_time + v_delay < millis())
+      {
+        actionBouche = 0;
+        v_time = millis();
+        delayFlag = 0;
+      }
     }
   }
+}
 
-  if ((boucheStatus == 1 && actionBouche == 1) or delayFlag == 3)
+void colorWipe(uint32_t c)
+{
+  for (uint16_t i = 0; i < strip.numPixels(); i++)
   {
-    if (delayFlag == 0)
-    {
-      delayFlag = 3;
-      obj_servoMouth.write(55);
-      v_time = millis();
-      vTaskDelay(40); // 3
-    }
-    if (v_time + v_delay < millis())
-    {
-      actionBouche = 0;
-      v_time = millis();
-      delayFlag = 0;
-    }
-  }
+    strip.setPixelColor(i, c);
+    strip.show();
   }
 }
