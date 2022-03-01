@@ -65,7 +65,11 @@ void InitNeopixelLedTask(void)
 void SerialTask(void*pvParameters)
 {
   (void)pvParameters;
-
+  //changer la couleur et mode du neopixel //RX
+  //renvoyer l'angle du servo
+  //renvoyer etat init des differentes taches pour informer RPI pour séquance d'init.
+  
+  //TODO; Creer un .h avec un enum status pour les return des INIT
   
 }
 
