@@ -10,10 +10,12 @@
 
 void SyncroVocal_Task(void*pvParameters);
 void NeoPixelLed_Task(void*pvParameters);
+void SerialTask(void*pvParameters);
 
 void InitGlobal(void);
 void InitVocalTask(void);
 void InitNeopixelLedTask(void);
+void InitSerialTask(void);
 
 Servo obj_servoMouth;
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NB_LEDS, NeoPixelPin, NEO_GRB + NEO_KHZ800); //déclaration objet neopixel
@@ -21,6 +23,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NB_LEDS, NeoPixelPin, NEO_GRB + NEO_
 void setup()
 {
   InitGlobal();
+  InitSerialTask();
   InitVocalTask();
   InitNeopixelLedTask();
 }
@@ -32,8 +35,14 @@ void loop() {
 void InitGlobal(void)
 {
   analogReference(EXTERNAL);
-  Serial.begin(9600);
 }
+
+void InitSerialTask(void)
+{
+  Serial.begin(115200);
+  xTaskCreate(SerialTask, "Serial", 128, NULL, 3, NULL);
+}
+
 
 void InitVocalTask(void)
 {
@@ -42,7 +51,7 @@ void InitVocalTask(void)
   obj_servoMouth.attach(MouthServoPin);
   obj_servoMouth.write(55);
 
-  xTaskCreate(SyncroVocal_Task, "Vocal", 512, NULL, 2, NULL);
+  xTaskCreate(SyncroVocal_Task, "Vocal", 128, NULL, 2, NULL);
 }
 
 void InitNeopixelLedTask(void)
@@ -52,6 +61,15 @@ void InitNeopixelLedTask(void)
 
   xTaskCreate(NeoPixelLed_Task, "Noeopixel", 128, NULL, 2, NULL);
 }
+
+void SerialTask(void*pvParameters)
+{
+  (void)pvParameters;
+
+  
+}
+
+
 
 void NeoPixelLed_Task(void*pvParameters)
 {
