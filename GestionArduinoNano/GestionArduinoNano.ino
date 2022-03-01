@@ -1,12 +1,13 @@
 #include <Adafruit_NeoPixel.h>
 #include <Arduino_FreeRTOS.h>
+#include <queue.h>
 #include <Servo.h>
 
 
 #define MouthServoPin 6 // pin du servo bouche
 #define LineInPin A0 // pin LineIn
 #define NeoPixelPin 9 //
-#define NB_LEDS 16
+#define NB_LEDS 3
 
 void SyncroVocal_Task(void*pvParameters);
 void NeoPixelLed_Task(void*pvParameters);
@@ -39,8 +40,19 @@ void InitGlobal(void)
 
 void InitSerialTask(void)
 {
-  Serial.begin(115200);
-  xTaskCreate(SerialTask, "Serial", 128, NULL, 3, NULL);
+  Serial.begin(115200); //init serial
+  QueueHandle_t queue_neopixel, queue_vocal;
+  int queueSize = 10;
+
+  queue_neopixel = xQueueCreate( queueSize, sizeof( int ) );
+  if (queue_neopixel == NULL) 
+  {
+    //return status error
+  }
+
+  
+
+  xTaskCreate(SerialTask, "Serial", 128, NULL, 2, NULL); //init serial task
 }
 
 
@@ -65,12 +77,17 @@ void InitNeopixelLedTask(void)
 void SerialTask(void*pvParameters)
 {
   (void)pvParameters;
+
   //changer la couleur et mode du neopixel //RX
   //renvoyer l'angle du servo
   //renvoyer etat init des differentes taches pour informer RPI pour séquance d'init.
-  
+
   //TODO; Creer un .h avec un enum status pour les return des INIT
-  
+  for (;;)
+  {
+
+  }
+
 }
 
 
@@ -83,12 +100,14 @@ void NeoPixelLed_Task(void*pvParameters)
   int alpha = 0; // Current value of the pixels
   int dir = 1; // Direction of the pixels... 1 = getting brighter, 0 = getting dimmer
   int flip; // Randomly flip the direction every once in a while
-  int minAlpha = 25; // Min value of brightness
+  int minAlpha = 10; // Min value of brightness
   int maxAlpha = 100; // Max value of brightness
-  int alphaDelta = 5; // Delta of brightness between times through the loop
+  int alphaDelta = 2; // Delta of brightness between times through the loop
 
   for (;;)
   {
+
+
     flip = random(32);
     if (flip > 20) {
       dir = 1 - dir;
@@ -108,13 +127,17 @@ void NeoPixelLed_Task(void*pvParameters)
       alpha = maxAlpha;
       dir = 0;
     }
+    vTaskDelay(3);
     // Change the line below to alter the color of the lights
     // The numbers represent the Red, Green, and Blue values
     // of the lights, as a value between 0(off) and 1(max brightness)
     //
     // EX:
-    //colorWipe(strip.Color(alpha, 0, alpha/2)); // Pink
-    colorWipe(strip.Color(0, 0, alpha)); // Blue
+    //
+
+
+    colorWipe(strip.Color(alpha, 0, alpha / 2)); // Pink
+    //colorWipe(strip.Color(0, 0, alpha)); // Blue
   }
 }
 
