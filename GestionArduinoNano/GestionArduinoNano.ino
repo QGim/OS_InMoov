@@ -1,5 +1,6 @@
 #include <Adafruit_NeoPixel.h>
 #include <Arduino_FreeRTOS.h>
+#include "return_state.h"
 #include <queue.h>
 #include <Servo.h>
 
@@ -89,9 +90,7 @@ void SerialTask(void*pvParameters)
 
   //changer la couleur et mode du neopixel //RX
   //renvoyer l'angle du servo
-  //renvoyer etat init des differentes taches pour informer RPI pour séquance d'init.
-
-  //TODO; Creer un .h avec un enum status pour les return des INIT
+  //renvoyer etat init des differentes taches pour informer RPI pour séquence d'init.
   for (;;)
   {
 
