@@ -4,8 +4,8 @@
 
 typedef enum
 {
-  RETOUR_OK = 0,
-  RETOUR_ERROR = -1,
-}RETOUR;
+  ETAT_OK = 0,
+  ETAT_ERROR = -1,
+}ETAT;
 
 #endif

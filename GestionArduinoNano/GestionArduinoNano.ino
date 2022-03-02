@@ -14,7 +14,7 @@ void SyncroVocal_Task(void*pvParameters);
 void NeoPixelLed_Task(void*pvParameters);
 void SerialTask(void*pvParameters);
 
-void InitGlobal(void);
+ETAT InitGlobal(void);
 void InitVocalTask(void);
 void InitNeopixelLedTask(void);
 void InitSerialTask(void);
@@ -24,6 +24,9 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NB_LEDS, NeoPixelPin, NEO_GRB + NEO_
 
 void setup()
 {
+  ETAT state;
+  state = ETAT_ERROR;
+  
   InitGlobal();
   InitSerialTask();
   InitVocalTask();
@@ -34,9 +37,13 @@ void loop() {
   //Do nothing
 
 }
-void InitGlobal(void)
+ETAT InitGlobal(void)
 {
+  ETAT state;
   analogReference(EXTERNAL);
+  state = ETAT_OK;
+
+  return state;
 }
 
 void InitSerialTask(void)
