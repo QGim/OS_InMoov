@@ -49,9 +49,11 @@ void InitSerialTask(void)
   {
     //return status error
   }
-
-  
-
+  queue_vocal = xQueueCreate( queueSize, sizeof( int ) );
+  if(queue_vocal == NULL)
+  {
+    //return status error
+  }
   xTaskCreate(SerialTask, "Serial", 128, NULL, 2, NULL); //init serial task
 }
 
@@ -74,6 +76,13 @@ void InitNeopixelLedTask(void)
   xTaskCreate(NeoPixelLed_Task, "Noeopixel", 128, NULL, 2, NULL);
 }
 
+
+
+
+
+
+
+
 void SerialTask(void*pvParameters)
 {
   (void)pvParameters;
@@ -89,8 +98,6 @@ void SerialTask(void*pvParameters)
   }
 
 }
-
-
 
 void NeoPixelLed_Task(void*pvParameters)
 {
@@ -145,7 +152,6 @@ void SyncroVocal_Task(void*pvParameters)
 {
 
   (void)pvParameters;
-
 
   int secondDetection = 1; //
   int read_val; // variable to store the read value
