@@ -1,6 +1,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <Arduino_FreeRTOS.h>
 #include "return_state.h"
+#include "GestionArduinoNano.h"
 #include <queue.h>
 #include <Servo.h>
 
@@ -15,28 +16,61 @@ void NeoPixelLed_Task(void*pvParameters);
 void SerialTask(void*pvParameters);
 
 ETAT InitGlobal(void);
-void InitVocalTask(void);
-void InitNeopixelLedTask(void);
-void InitSerialTask(void);
+ETAT InitVocalTask(void);
+ETAT InitNeopixelLedTask(void);
+ETAT InitSerialTask(void);
 
 Servo obj_servoMouth;
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NB_LEDS, NeoPixelPin, NEO_GRB + NEO_KHZ800); //déclaration objet neopixel
 
+
+
 void setup()
 {
   ETAT state;
-  state = ETAT_ERROR;
-  
-  InitGlobal();
-  InitSerialTask();
-  InitVocalTask();
-  InitNeopixelLedTask();
+  state = ETAT_OK;
+
+  TXSerial sendState;
+
+  state = InitGlobal();
+  if (state != ETAT_OK)
+  {
+    
+    return -1;
+  }
+
+  state = InitSerialTask();
+  if (state != ETAT_OK)
+  {
+    //mettre etat dans struct
+    return -1;
+  }
+
+  state = InitVocalTask();
+  if (state != ETAT_OK)
+  {
+    //mettre etat dans struct
+    return -1;
+  }
+
+  state = InitNeopixelLedTask();
+  if (state != ETAT_OK)
+  {
+    //mettre etat dans struct
+    return -1;
+  }
+
+  Serial.println("Init OK");
+  //TODO: Ajouter queue pour renvoyer state au serial(utiliser structure)
+
 }
 
 void loop() {
   //Do nothing
 
 }
+
+//Initialisation arduino global
 ETAT InitGlobal(void)
 {
   ETAT state;
@@ -46,42 +80,65 @@ ETAT InitGlobal(void)
   return state;
 }
 
-void InitSerialTask(void)
+//Initialisation tache serial pour les transfert d'info à RPI
+ETAT InitSerialTask(void)
 {
+  ETAT state;
+  state = ETAT_ERROR;
   Serial.begin(115200); //init serial
   QueueHandle_t queue_neopixel, queue_vocal;
   int queueSize = 10;
 
-  queue_neopixel = xQueueCreate( queueSize, sizeof( int ) );
-  if (queue_neopixel == NULL) 
+  queue_neopixel = xQueueCreate( queueSize, sizeof( int ));
+  if (queue_neopixel != NULL)
   {
-    //return status error
+    state = ETAT_OK;
   }
-  queue_vocal = xQueueCreate( queueSize, sizeof( int ) );
-  if(queue_vocal == NULL)
+  queue_vocal = xQueueCreate( queueSize, sizeof( int ));
+  if (queue_vocal != NULL)
   {
-    //return status error
+    state = ETAT_OK;
   }
-  xTaskCreate(SerialTask, "Serial", 128, NULL, 2, NULL); //init serial task
+  
+  //init serial task
+  if(xTaskCreate(SerialTask, "Serial", 128, NULL, 2, NULL)==pdPASS)
+  {
+    state = ETAT_OK;
+  }
+  
+  return state;
 }
 
 
-void InitVocalTask(void)
+ETAT InitVocalTask(void)
 {
+  ETAT state;
+  state = ETAT_ERROR;
 
   pinMode(MouthServoPin, OUTPUT);
   obj_servoMouth.attach(MouthServoPin);
   obj_servoMouth.write(55);
-
-  xTaskCreate(SyncroVocal_Task, "Vocal", 128, NULL, 2, NULL);
+  if (xTaskCreate(SyncroVocal_Task, "Vocal", 128, NULL, 2, NULL) == pdPASS)
+  {
+    state = ETAT_OK;
+  }
+  return state;
 }
 
-void InitNeopixelLedTask(void)
+ETAT InitNeopixelLedTask(void)
 {
+  ETAT state;
+  state = ETAT_ERROR;
+  
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
 
-  xTaskCreate(NeoPixelLed_Task, "Noeopixel", 128, NULL, 2, NULL);
+  if(xTaskCreate(NeoPixelLed_Task, "Noeopixel", 128, NULL, 2, NULL)==pdPASS)
+  {
+    state = ETAT_OK;
+  }
+  
+  return state;
 }
 
 
