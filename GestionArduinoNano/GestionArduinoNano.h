@@ -3,7 +3,7 @@
 
 typedef struct
 {
-  ETAT state;
+  ETAT etat_retour;
    union
    {
      int angleServo;

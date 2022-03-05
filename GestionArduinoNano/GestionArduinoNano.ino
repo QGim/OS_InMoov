@@ -35,30 +35,28 @@ void setup()
   state = InitGlobal();
   if (state != ETAT_OK)
   {
-    
-    return -1;
+    sendState.etat_retour = state;
   }
 
   state = InitSerialTask();
   if (state != ETAT_OK)
   {
-    //mettre etat dans struct
-    return -1;
+    
+    sendState.etat_retour = state;
   }
 
   state = InitVocalTask();
   if (state != ETAT_OK)
   {
-    //mettre etat dans struct
-    return -1;
+    sendState.etat_retour = state;
   }
 
   state = InitNeopixelLedTask();
   if (state != ETAT_OK)
   {
-    //mettre etat dans struct
-    return -1;
+    sendState.etat_retour = state;
   }
+
 
   Serial.println("Init OK");
   //TODO: Ajouter queue pour renvoyer state au serial(utiliser structure)
