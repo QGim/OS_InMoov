@@ -7,9 +7,10 @@
 
 
 #define MouthServoPin 6 // pin du servo bouche
-#define LineInPin A0 // pin LineIn
+#define LineInPin A3 // pin LineIn
 #define NeoPixelPin 9 //
-#define NB_LEDS 3
+#define NB_LEDS 16
+#define QUEUE_SIZE 10
 
 void SyncroVocal_Task(void*pvParameters);
 void NeoPixelLed_Task(void*pvParameters);
@@ -22,6 +23,8 @@ ETAT InitSerialTask(void);
 
 Servo obj_servoMouth;
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NB_LEDS, NeoPixelPin, NEO_GRB + NEO_KHZ800); //déclaration objet neopixel
+QueueHandle_t queue_neopixel, queue_vocal, queue_init = NULL;
+
 
 
 
@@ -29,37 +32,58 @@ void setup()
 {
   ETAT state;
   state = ETAT_OK;
+  struct SerialData SerData;
 
-  TXSerial sendState;
+  queue_neopixel = xQueueCreate( QUEUE_SIZE, sizeof( struct SerialData));
+  if (queue_neopixel != NULL)
+  {
+    state = ETAT_OK;
+  }
+  queue_vocal = xQueueCreate( QUEUE_SIZE, sizeof( struct SerialData));
+  if (queue_vocal != NULL)
+  {
+    state = ETAT_OK;
+  }
+
+  queue_init = xQueueCreate( QUEUE_SIZE, sizeof( struct SerialData));
+  if (queue_init != NULL)
+  {
+    state = ETAT_OK;
+  }
+
 
   state = InitGlobal();
   if (state != ETAT_OK)
   {
-    sendState.etat_retour = state;
+    SerData.etat = state;
   }
 
   state = InitSerialTask();
   if (state != ETAT_OK)
   {
-    
-    sendState.etat_retour = state;
+
+    SerData.etat = state;
   }
 
   state = InitVocalTask();
   if (state != ETAT_OK)
   {
-    sendState.etat_retour = state;
+    SerData.etat = state;
   }
 
   state = InitNeopixelLedTask();
   if (state != ETAT_OK)
   {
-    sendState.etat_retour = state;
+    SerData.etat = state;
   }
 
 
-  Serial.println("Init OK");
-  //TODO: Ajouter queue pour renvoyer state au serial(utiliser structure)
+  if (state == ETAT_OK)
+  {
+    SerData.etat = state;
+  }
+
+  xQueueSend(queue_init, &SerData, portMAX_DELAY);
 
 }
 
@@ -72,9 +96,8 @@ void loop() {
 ETAT InitGlobal(void)
 {
   ETAT state;
-  analogReference(EXTERNAL);
   state = ETAT_OK;
-
+  analogReference(INTERNAL);
   return state;
 }
 
@@ -84,26 +107,13 @@ ETAT InitSerialTask(void)
   ETAT state;
   state = ETAT_ERROR;
   Serial.begin(115200); //init serial
-  QueueHandle_t queue_neopixel, queue_vocal;
-  int queueSize = 10;
 
-  queue_neopixel = xQueueCreate( queueSize, sizeof( int ));
-  if (queue_neopixel != NULL)
-  {
-    state = ETAT_OK;
-  }
-  queue_vocal = xQueueCreate( queueSize, sizeof( int ));
-  if (queue_vocal != NULL)
-  {
-    state = ETAT_OK;
-  }
-  
   //init serial task
-  if(xTaskCreate(SerialTask, "Serial", 128, NULL, 2, NULL)==pdPASS)
+  if (xTaskCreate(SerialTask, "Serial", 128, NULL, 2, NULL) == pdPASS)
   {
     state = ETAT_OK;
   }
-  
+
   return state;
 }
 
@@ -127,15 +137,15 @@ ETAT InitNeopixelLedTask(void)
 {
   ETAT state;
   state = ETAT_ERROR;
-  
+
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
 
-  if(xTaskCreate(NeoPixelLed_Task, "Noeopixel", 128, NULL, 2, NULL)==pdPASS)
+  if (xTaskCreate(NeoPixelLed_Task, "Noeopixel", 128, NULL, 2, NULL) == pdPASS)
   {
     state = ETAT_OK;
   }
-  
+
   return state;
 }
 
@@ -149,13 +159,18 @@ ETAT InitNeopixelLedTask(void)
 void SerialTask(void*pvParameters)
 {
   (void)pvParameters;
+  struct SerialData DataSerialSend;
 
   //changer la couleur et mode du neopixel //RX
   //renvoyer l'angle du servo
   //renvoyer etat init des differentes taches pour informer RPI pour séquence d'init.
   for (;;)
   {
-
+    xQueueReceive(queue_init, &DataSerialSend, portMAX_DELAY);
+    if (DataSerialSend.etat == ETAT_OK)
+    {
+      Serial.write ("Init OK");
+    }
   }
 
 }
@@ -204,8 +219,8 @@ void NeoPixelLed_Task(void*pvParameters)
     //
 
 
-    colorWipe(strip.Color(alpha, 0, alpha / 2)); // Pink
-    //colorWipe(strip.Color(0, 0, alpha)); // Blue
+    //colorWipe(strip.Color(alpha, 0, alpha / 2)); // Pink
+    colorWipe(strip.Color(0, 0, alpha)); // Blue
   }
 }
 
@@ -214,84 +229,74 @@ void SyncroVocal_Task(void*pvParameters)
 
   (void)pvParameters;
 
-  int secondDetection = 1; //
-  int read_val; // variable to store the read value
-  int i = 0;
-  int pos = 55; // variable to store the servo position
-  int boucheStatus = 0;
-  int actionBouche = 0;
-
-  unsigned long timeofdetect;
-  char delayFlag = 0;
-  unsigned long v_delay = 1;
-  unsigned long v_time;
+  int     MIN = 10; //value when sound is detected
+  int     MAX = 500;  //max value when sound is detected
+  int     SecondDetection = 2;
+  int     val = 0;
+  int     i = 0;
+  int     posMax = 100;
+  int     posMin = 65;
+  int     pos = posMin;
+  int     BoucheStatus = 0;
+  int     ActionBouche = 0;
+  int     Repos = 0;
+  int     CompteurRepos = 0;
+  String  dbg;
 
   for (;;)
   {
-    if (delayFlag == 0)
+    val = analogRead(LineInPin);
+    pos = map(val, MIN, MAX, posMin, posMax);
+
+    if (val > MIN ) // if values detected : speaker voltage
+
     {
-      read_val = analogRead(LineInPin);
-
-      if (read_val < 630 || read_val > 680 ) // recherche valeur entre 665 et 680 ( a ajuster si besoin )
-
-      {
-        boucheStatus = 1; // bouche fermée
-
-      }
-      else // tant que
-
-      {
-        i++; // la valeur entre 630 et 680 est pas trouvée
-      }
-
-      if (i >= secondDetection)
-      {
-        i = 0;
-        boucheStatus = 0;
-      }
+      i++;
     }
-    if (boucheStatus == 0 && actionBouche == 0)
+    else
     {
-      if (delayFlag == 0)
-      {
-        obj_servoMouth.write(95);
-        v_time = millis();
-        delayFlag = 1;
-      }
-      vTaskDelay(40); //1
-
-      if (v_time + v_delay < millis() and delayFlag == 1)
-      {
-        obj_servoMouth.write(55);
-        v_time = millis();
-        delayFlag = 2;
-      }
-      vTaskDelay(40); //2
-
-      if (v_time + v_delay < millis() and delayFlag == 2)
-      {
-        actionBouche = 1;
-        v_time = millis();
-        delayFlag = 0;
-      }
+      BoucheStatus = 1; // closed mouth
     }
 
-    if ((boucheStatus == 1 && actionBouche == 1) or delayFlag == 3)
+    if (i >= SecondDetection)
     {
-      if (delayFlag == 0)
-      {
-        delayFlag = 3;
-        obj_servoMouth.write(55);
-        v_time = millis();
-        vTaskDelay(40); // 3
-      }
-      if (v_time + v_delay < millis())
-      {
-        actionBouche = 0;
-        v_time = millis();
-        delayFlag = 0;
-      }
+      i = 0;
+      BoucheStatus = 0;
     }
+
+    if (BoucheStatus == 0 && ActionBouche == 0)
+
+    {
+      if (Repos == 0)
+      {
+        obj_servoMouth.attach(MouthServoPin);
+        delay(1);
+      }
+      ActionBouche = 1;
+      obj_servoMouth.write(pos);
+      CompteurRepos = 0;
+      delay(1);
+
+    }
+    if (BoucheStatus == 1 && ActionBouche == 1)
+    {
+
+      Repos = 0;
+      CompteurRepos = 0;
+      ActionBouche = 0;
+
+    }
+
+    if (CompteurRepos == 100 && Repos == 0)
+    {
+      obj_servoMouth.write(posMin);
+      delay(10);
+      obj_servoMouth.detach();
+      Repos = 1;
+    }
+
+    CompteurRepos += 1;
+    delay(1);
   }
 }
 
