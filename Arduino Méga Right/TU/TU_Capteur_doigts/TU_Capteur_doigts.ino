@@ -8,12 +8,22 @@ Annu  : A11
 Auri  : A10
 */
 
+#define NB_CAPTEURS 5
+
+int ports_capteurs[NB_CAPTEURS] = {A14,A13,A12,A11,A10};
+int value_capteurs[NB_CAPTEURS] = {};
+String spacer = " : ";
+
 void setup() {
   Serial.begin(115200);
 }
 
 void loop() {
-  int sensorValue = analogRead(A14);
-  Serial.println(sensorValue);
+  for(int i = 0;i<NB_CAPTEURS;i++)
+  {
+     value_capteurs[i] = analogRead(ports_capteurs[i]);
+  }
+  
+  Serial.println(value_capteurs[0] + spacer + value_capteurs[1] +spacer+ value_capteurs[2] +spacer+ value_capteurs[3]+spacer+value_capteurs[4]);
   delay(1);        
 }
