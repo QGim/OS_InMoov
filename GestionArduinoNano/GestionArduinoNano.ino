@@ -183,15 +183,15 @@ void NeoPixelLed_Task(void*pvParameters)
   int alpha = 0; // Current value of the pixels
   int dir = 1; // Direction of the pixels... 1 = getting brighter, 0 = getting dimmer
   int flip; // Randomly flip the direction every once in a while
-  int minAlpha = 10; // Min value of brightness
+  int minAlpha = 5; // Min value of brightness
   int maxAlpha = 100; // Max value of brightness
-  int alphaDelta = 2; // Delta of brightness between times through the loop
+  int alphaDelta = 1; // Delta of brightness between times through the loop
 
   for (;;)
   {
 
 
-    flip = random(32);
+    flip = random(50);
     if (flip > 20) {
       dir = 1 - dir;
     }
