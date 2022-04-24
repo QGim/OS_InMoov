@@ -25,17 +25,8 @@ void loop() {
   for(int i = 0;i<NB_CAPTEURS;i++)
   {
      value_capteurs[i] = analogRead(ports_capteurs[i]);
-     if(value_capteurs[i]<min_values[i])
-     {
-      min_values[i] = value_capteurs[i];
-     }
-
-     if(value_capteurs[i]>max_values[i])
-     {
-      max_values[i] = value_capteurs[i];
-     }
   }
-  Serial.println( min_values[0] + spacer + max_values[0] + spacer + value_capteurs[0]);
-  //Serial.println(value_capteurs[0] + spacer + value_capteurs[1] + spacer +  value_capteurs[2] + spacer + value_capteurs[3]+spacer+value_capteurs[4]);
+ 
+  Serial.println(value_capteurs[0] + spacer + value_capteurs[1] + spacer +  value_capteurs[2] + spacer + value_capteurs[3]+spacer+value_capteurs[4]);
   delay(1);        
 }
