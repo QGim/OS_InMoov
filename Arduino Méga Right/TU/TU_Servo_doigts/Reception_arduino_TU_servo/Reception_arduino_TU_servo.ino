@@ -28,27 +28,27 @@ void loop()
      String subvalue2 = value.substring(1);
     switch(commandChar)
     {
-      case 'a':
+      case'a':
       //Serial.println(subvalue2.toInt());
       pouce.write(subvalue2.toInt());
       break;
-      case 'b':
+      case'b':
       //Serial.println(subvalue2.toInt());
       index.write(subvalue2.toInt());
       break;
-      case 'c':
+      case'c':
       //Serial.println(subvalue2.toInt());
       maj.write(subvalue2.toInt());
       break;
-      case 'd':
+      case'd':
       //Serial.println(subvalue2.toInt());
       annu.write(subvalue2.toInt());
       break;
-      case 'e':
+      case'e':
       //Serial.println(subvalue2.toInt());
       auri.write(subvalue2.toInt());
       break;
-      case 'f':
+      case'f':
       //Serial.println(subvalue2.toInt());
       poignet.write(subvalue2.toInt());
       break;
