@@ -1,7 +1,7 @@
 #include "status.h"
 #include "NeoPixel.h"
 
-Pixel pixel;
+
 
 void clearPixel(void)
 {
