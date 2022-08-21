@@ -1,6 +1,9 @@
 #ifndef NeoPixel_h
 #define NeoPixel_h
 
+#define NB_LEDS 15
+#define PINOUT_NEOPIXEL 9
+
 /*Mode d'animation*/
  
 
@@ -24,20 +27,20 @@ typedef enum
 
 typedef struct 
 {
-    u8 rouge;
-    u8 vert;
-    u8 bleu;
+    short rouge;
+    short vert;
+    short bleu;
 }couleur;
 
 
-typedef struct pixel_ctx
+typedef struct
 {
     
     couleur color;
+    Animation anim;
+} __attribute__((packed))pixel_ctx;
 
 
-} __attribute__((packed))pixel_ctx_t;
 
-void clearPixel(void);
 
 #endif

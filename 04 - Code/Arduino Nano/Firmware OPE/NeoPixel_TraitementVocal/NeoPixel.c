@@ -3,9 +3,17 @@
 
 
 
-void clearPixel(void)
+void stop_animation(void)
 {
-    pixel.rouge = 0;
-    pixel.vert = 0;
-    pixel.bleu = 0;
+  
+}
+
+ETAT clearNeoPixel(void)
+{
+  ETAT etat;
+  etat = ETAT_OK;
+  //pixels.begin();
+  //pixels.clear();
+  //pixels.show();
+  return etat;
 }
