@@ -3,7 +3,7 @@
 #include "status.h"
 #include "NeoPixel.h"
 #include "request.h"
-
+#define MAXMESSAGE 100
 
 
 void VocalSyncTask(void *pvParameters);
@@ -47,11 +47,11 @@ void ControllerTask(void *pvParameters)
   Serial.begin(115200);
 
   //Création de la requète
-  const size_t request_size = 256;
-  String index;
-  char separateur = " ";
-  static char input_buffer[request_size];
-  static uint8_t i;
+
+  char request[MAXMESSAGE];
+  char separateur[] = "-";
+  char *tokenPtr;
+  int charsRead;
   struct Requete req;
 
   (void)pvParameters;
@@ -60,29 +60,18 @@ void ControllerTask(void *pvParameters)
   {
     if (Serial.available() > ETAT_OK)
     {
-      char c = Serial.read();
-      if ( c != '\n' && i < request_size - 1 )
+      charsRead = Serial.readBytesUntil('\n', request, MAXMESSAGE - 1);
+      request[charsRead] = '\0';   // Now it's a string
+
+      Serial.print("Target string:  ");
+      Serial.println(request);
+
+      tokenPtr = strtok(request, separateur);
+
+      while (tokenPtr != '\0')
       {
-        input_buffer[i++] = c;
-      }
-      else
-      {
-        input_buffer[ i ] = '\0';
-        i = 0;
-        Serial.print("Requete global recue:");
-        Serial.println(input_buffer);
-        
-        index = strtok(input_buffer," ");
-        //req.port = atoi(index);
-        Serial.println(index.toInt()); 
-
-
-        //Serial.print("Port:");
-        //Serial.println(req.port,DEC);           
-
-        Serial.println("\n\n\n");
-
-        Serial.println("\n\n\n");
+        Serial.println(tokenPtr);
+        tokenPtr = strtok('\0', separateur);
       }
     }
   }
