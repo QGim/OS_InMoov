@@ -37,7 +37,6 @@ void NeoPixelTask(void *pvParameters)
   (void)pvParameters;
   while (1)
   {
-
   }
 }
 
@@ -47,12 +46,13 @@ void ControllerTask(void *pvParameters)
   Serial.begin(115200);
 
   //Création de la requète
-
-  char request[MAXMESSAGE];
-  char separateur[] = "-";
-  char *tokenPtr;
-  int charsRead;
+  const size_t request_size = 256;
+  const char separateur[2] = " ";
+  static char input_buffer[request_size];
+  static uint8_t i, j;
   struct Requete req;
+  char *token;
+  char *temp[10] = {};
 
   (void)pvParameters;
 
@@ -60,18 +60,35 @@ void ControllerTask(void *pvParameters)
   {
     if (Serial.available() > ETAT_OK)
     {
-      charsRead = Serial.readBytesUntil('\n', request, MAXMESSAGE - 1);
-      request[charsRead] = '\0';   // Now it's a string
-
-      Serial.print("Target string:  ");
-      Serial.println(request);
-
-      tokenPtr = strtok(request, separateur);
-
-      while (tokenPtr != '\0')
+      char c = Serial.read();
+      if ( c != '\n' && i < request_size - 1 )
       {
-        Serial.println(tokenPtr);
-        tokenPtr = strtok('\0', separateur);
+        input_buffer[i++] = c;
+      }
+      else
+      {
+        input_buffer[ i ] = '\0';
+        i = 0;
+        j = 0;
+        Serial.print("Requete global recue:");
+        Serial.println(input_buffer);
+
+        /*obtention du premier token */
+        token = strtok(input_buffer, separateur);
+        req.port = token;
+        /* obtention des autres tokens */
+        while ( token != NULL )
+        {
+          token = strtok(NULL, separateur);
+          temp[j] = token;
+          j++;
+        }
+       req.nb_leds = temp[0];
+       req.mode = temp[1];
+
+       Serial.println(req.port);
+       Serial.println(req.nb_leds);
+       Serial.println(req.mode);
       }
     }
   }
