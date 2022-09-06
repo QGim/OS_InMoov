@@ -83,12 +83,16 @@ void ControllerTask(void *pvParameters)
           temp[j] = token;
           j++;
         }
-       req.nb_leds = temp[0];
-       req.mode = temp[1];
+        req.nb_leds = temp[0];
+        req.mode = temp[1];
+        req.func = temp[2];
+        req.nb_params = temp[3];
 
-       Serial.println(req.port);
-       Serial.println(req.nb_leds);
-       Serial.println(req.mode);
+
+        Serial.println(req.port);
+        Serial.println(req.nb_leds);
+        Serial.println(req.mode);
+        Serial.println(req.nb_params);
       }
     }
   }
