@@ -72,27 +72,34 @@ void ControllerTask(void *pvParameters)
         j = 0;
         Serial.print("Requete global recue:");
         Serial.println(input_buffer);
-
-        /*obtention du premier token */
-        token = strtok(input_buffer, separateur);
-        req.port = token;
-        /* obtention des autres tokens */
-        while ( token != NULL )
+        //Add  security request
+        if (input_buffer[0] == '\0')
         {
-          token = strtok(NULL, separateur);
-          temp[j] = token;
-          j++;
+          Serial.println(ETAT_EAGAIN);
         }
-        req.nb_leds = temp[0];
-        req.mode = temp[1];
-        req.func = temp[2];
-        req.nb_params = temp[3];
+        else
+        {
+          /*obtention du premier token */
+          token = strtok(input_buffer, separateur);
+          req.port = token;
+          /* obtention des autres tokens */
+          while ( token != NULL )
+          {
+            token = strtok(NULL, separateur);
+            temp[j] = token;
+            j++;
+          }
+          req.nb_leds = temp[0];
+          req.mode = temp[1];
+          req.func = temp[2];
+          req.nb_params = temp[3];
 
 
-        Serial.println(req.port);
-        Serial.println(req.nb_leds);
-        Serial.println(req.mode);
-        Serial.println(req.nb_params);
+          Serial.println(req.port);
+          Serial.println(req.nb_leds);
+          Serial.println(req.mode);
+          Serial.println(req.nb_params);
+        }
       }
     }
   }
