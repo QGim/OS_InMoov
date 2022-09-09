@@ -73,8 +73,13 @@ void ControllerTask(void *pvParameters)
         Serial.print("Requete global recue:");
         Serial.println(input_buffer);
         //Add  security request
-        if (input_buffer[0] == '\0')
+        if (input_buffer[0] == '\0' || input_buffer[0] ==' ')
         {
+          req.port = NULL;
+          req.nb_leds = NULL;
+          req.mode = NULL;
+          req.func = NULL;
+          req.nb_params = NULL;
           Serial.println(ETAT_EAGAIN);
         }
         else
