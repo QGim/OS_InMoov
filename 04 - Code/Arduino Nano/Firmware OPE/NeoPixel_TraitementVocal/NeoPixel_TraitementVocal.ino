@@ -1,9 +1,12 @@
 
 #include <Arduino_FreeRTOS.h>
+#include <Servo.h> 
 #include "status.h"
 #include "NeoPixel.h"
 #include "request.h"
 #define MAXMESSAGE 100
+
+
 
 
 void VocalSyncTask(void *pvParameters);
@@ -16,7 +19,7 @@ void setup()
   xTaskCreate(VocalSyncTask, (const char *const)"SyncroVocal", 128, NULL, 2, NULL);
   xTaskCreate(NeoPixelTask, (const char *const)"NeoPixel", 128, NULL, 2, NULL);
   xTaskCreate(ControllerTask, (const char *const)"CtrlNano", 128, NULL, 2, NULL);
-
+  Serial.begin(115200);
 }
 
 void loop()
@@ -26,9 +29,11 @@ void loop()
 void VocalSyncTask(void *pvParameters)
 {
   (void)pvParameters;
+  Servo myservo;
+  #define servoPin 6 
   while (1)
   {
-
+    
   }
 }
 
@@ -37,14 +42,12 @@ void NeoPixelTask(void *pvParameters)
   (void)pvParameters;
   while (1)
   {
+    
   }
 }
 
 void ControllerTask(void *pvParameters)
 {
-
-  Serial.begin(115200);
-
   //Création de la requète
   const size_t request_size = 256;
   const char separateur[2] = " ";
@@ -75,11 +78,11 @@ void ControllerTask(void *pvParameters)
         //Add  security request
         if (input_buffer[0] == '\0' || input_buffer[0] ==' ')
         {
-          req.port = NULL;
-          req.nb_leds = NULL;
-          req.mode = NULL;
-          req.func = NULL;
-          req.nb_params = NULL;
+          req.port = "";
+          req.nb_leds = "";
+          req.mode = "";
+          req.func = "";
+          req.nb_params = "";
           Serial.println(ETAT_EAGAIN);
         }
         else
@@ -99,7 +102,10 @@ void ControllerTask(void *pvParameters)
           req.func = temp[2];
           req.nb_params = temp[3];
 
-
+          if (req.nb_params == "0")
+          {
+            
+          }
           Serial.println(req.port);
           Serial.println(req.nb_leds);
           Serial.println(req.mode);
