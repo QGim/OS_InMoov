@@ -139,22 +139,29 @@ void ControllerTask(void *pvParameters)
 
 void parseOrder(String ord,ctx_order *order_data)
 {
-  String part1;
-  String part2;
-  String part3;
+  String part1; // nb leds
+  String part2; // mode d'allumage
+  String part3; // Nb params
 
   part1 = ord.substring(0,ord.indexOf(" "));
   int nb_leds = part1.toInt();
  
   part2 = ord.substring(ord.indexOf(" ") + 1);
+  part3 = ord.substring(ord.indexOf(" ") + 1);
 
   if(nb_leds == 0) // Attention si aucune led selectionné ->mode eteint par default et mode forcé à 0
   {
-    
+    order_data.nb_leds = nb_leds;
+    order_data.mode = 0;
+    order_data.params = 0;
   }
   else if(nb_leds > 0) //Tout est prix en compte
   {
+    order_data.nb_leds = nb_leds;
+    
     int mode = part2.toInt();
+    order_data.mode = mode;
+  
     
   }
   else if(nb_leds < 0) // erreurs params (ERANGE)
