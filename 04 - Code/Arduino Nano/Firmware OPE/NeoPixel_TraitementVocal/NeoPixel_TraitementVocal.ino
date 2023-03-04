@@ -3,39 +3,60 @@
 #include <queue.h>
 #include <Servo.h> 
 #include "status.h"
-#include "NeoPixel.h"
 #include "order.h"
+#include "MsgCodec.h"
 
 #define MAXMESSAGE 100
 #define servoMouthPin 6
 #define HPPin_In A3
 
 /*
- * Ajout des prototypes des taches RTOS
- */
+ Ajout des prototypes des taches RTOS
+*/
 void VocalSyncTask(void *pvParameters);
 void NeoPixelTask(void *pvParameters);
 void ControllerTask(void *pvParameters);
 
+//Sturcture corespondant aux ordres
+struct Ctx_order order_data;
+byte recvBuffer[MAX_MSG_SIZE];
+
+//Setup des trois taches :
+/*
+Syncro vocal: 
+permet la syncro entre le signal vocal analogique 
+en un signal PWM pour le servo qui bouge la bouche
+
+Néo Pixel : 
+Tache permetant d'allumer ou d'eteinde cercle de led 
+NéoPixel et traitants les ordres en provenance d'une queue.
+
+CtrlNano :
+Permet de creer un parser permettant de recuperer les ordres par la raspberry
+*/
 void setup()
 {
   Serial.begin(115200);
   
   xTaskCreate(VocalSyncTask, (const char *const)"SyncroVocal", 128, NULL, 3, NULL);
   xTaskCreate(NeoPixelTask, (const char *const)"NeoPixel", 128, NULL, 1, NULL);
-  xTaskCreate(ControllerTask, (const char *const)"CtrlNano", 128, NULL, 3, NULL);
+  xTaskCreate(ReadMsg, (const char *const)"CtrlNano", 128, NULL, 2, NULL);
 
   vTaskStartScheduler();
 }
+
+
 
 void loop()
 {
 }
 
+
+
+
 void VocalSyncTask(void *pvParameters)
 {
   (void)pvParameters;
-  u16 test;
   Servo myservo;                 
   int     MIN = 400; //value when sound is detected
   int     MAX = 1000;  //max value when sound is detected
@@ -112,32 +133,59 @@ void NeoPixelTask(void *pvParameters)
 
 
  
-void ControllerTask(void *pvParameters)
+void ReadMsg(void *pvParameters)
 {
+
+  //String order;
+  //Ctx_order order_data;
+  int byteCounter = 0;
+  int msg_size = 0;
  (void)pvParameters;
-  String order;
-  ctx_order order_data;
- 
+  
+  //for process FreeRTOS
   for(;;)
   {
-    if(Serial.available())
+    int bytesAvailable = Serial.available();
+    if(bytesAvailable>0)
     {
-       char c = Serial.read();
-       if( c == '\n')
-       {
-          parseOrder(order,&order_data);
-          order = "";
-       }
-       else
-       {
-          order += c;
-       }
+      for (int i = 0; i < bytesAvailable; i++) 
+      {
+        // read the incoming values
+        unsigned char receiveByte = Serial.read();
+        ++byteCounter;
+        // Verifier si le premier byte est le MAGIC_NUMBER
+        if(byteCounter == 1 && receiveByte != MAGIC_NUMBER)
+        {
+          byteCounter = 0;
+          Serial.print(ETAT_ESERIAL);
+        }
+
+        if (byteCounter == 2) 
+        {
+				// recuperation de la taille du message
+				// verification si le message est superieur à 64
+          if (receiveByte > MAX_MSG_SIZE) 
+          {
+            byteCounter = 0;
+            Serial.print(ETAT_ESERIAL);
+            continue;
+          }
+				  msg_size = receiveByte;
+        }
+        if (byteCounter > 2)
+        {
+          recvBuffer[byteCounter - 3] = receiveByte;
+        }
+
+
+
+      }
     }
   }
 }
 
 
-void parseOrder(String ord,ctx_order *order_data)
+void parseOrder(String ord,Ctx_order* order_data)
 {
   String part1; // nb leds
   String part2; // mode d'allumage
@@ -151,17 +199,16 @@ void parseOrder(String ord,ctx_order *order_data)
 
   if(nb_leds == 0) // Attention si aucune led selectionné ->mode eteint par default et mode forcé à 0
   {
-    order_data.nb_leds = nb_leds;
-    order_data.mode = 0;
-    order_data.params = 0;
+    order_data->nb_leds= nb_leds;
+    order_data->mode = 0;
   }
   else if(nb_leds > 0) //Tout est prix en compte
   {
-    order_data.nb_leds = nb_leds;
+    order_data->nb_leds = nb_leds;
     
     int mode = part2.toInt();
-    order_data.mode = mode;
-  
+    order_data->mode = mode;
+
     
   }
   else if(nb_leds < 0) // erreurs params (ERANGE)

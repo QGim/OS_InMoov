@@ -1,0 +1,1 @@
+python3 /home/inmoov/Documents/Scripts/ventil.py &

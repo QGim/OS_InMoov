@@ -1,0 +1,7 @@
+{
+    "port": "COM9",
+    "board": "arduino:avr:mega",
+    "configuration": "cpu=atmega2560",
+    "programmer": "arduino:avrispmkii",
+    "sketch": "RAZ_Servo\\RAZ_Servo.ino"
+}

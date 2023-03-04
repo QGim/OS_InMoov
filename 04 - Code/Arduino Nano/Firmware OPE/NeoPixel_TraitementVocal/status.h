@@ -12,6 +12,7 @@ typedef enum
   ETAT_ENOENT = -6,   //-> Return
   ETAT_ENOSPC = -7,   //-> Return
   ETAT_EABORTED = -8, //-> Return
+  ETAT_ESERIAL = -9    //-> Return error on serial com
 } ETAT;
 
 #endif

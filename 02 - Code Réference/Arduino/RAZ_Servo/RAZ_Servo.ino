@@ -8,10 +8,10 @@ Servo myservo2;// create servo object to control a servo
 
 void setup() 
 {
-   myservo2.attach(17);
-   myservo2.write(5); 
-
+   myservo2.attach(18);
+   myservo2.write(90); 
 }
 void loop()
 {
+
 }

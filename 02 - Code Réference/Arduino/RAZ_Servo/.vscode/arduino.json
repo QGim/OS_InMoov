@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:megaADK",
+    "port": "COM9",
+    "programmer": "arduino:avrispmkii",
+    "sketch": "RAZ_Servo.ino"
+}
