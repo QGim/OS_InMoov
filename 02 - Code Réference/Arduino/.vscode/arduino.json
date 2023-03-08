@@ -1,5 +1,5 @@
 {
-    "port": "COM9",
+    "port": "COM3",
     "board": "arduino:avr:mega",
     "configuration": "cpu=atmega2560",
     "programmer": "arduino:avrispmkii",

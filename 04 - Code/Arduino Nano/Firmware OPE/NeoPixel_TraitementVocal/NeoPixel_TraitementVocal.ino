@@ -1,4 +1,3 @@
-
 #include <Arduino_FreeRTOS.h>
 #include <queue.h>
 #include <Servo.h> 
@@ -15,7 +14,9 @@
 */
 void VocalSyncTask(void *pvParameters);
 void NeoPixelTask(void *pvParameters);
-void ControllerTask(void *pvParameters);
+void ReadMsg(void *pvParameters);
+
+
 
 //Sturcture corespondant aux ordres
 struct Ctx_order order_data;
@@ -36,13 +37,15 @@ Permet de creer un parser permettant de recuperer les ordres par la raspberry
 */
 void setup()
 {
-  Serial.begin(115200);
-  
-  xTaskCreate(VocalSyncTask, (const char *const)"SyncroVocal", 128, NULL, 3, NULL);
-  xTaskCreate(NeoPixelTask, (const char *const)"NeoPixel", 128, NULL, 1, NULL);
-  xTaskCreate(ReadMsg, (const char *const)"CtrlNano", 128, NULL, 2, NULL);
+  Serial.begin(9600);
 
-  vTaskStartScheduler();
+while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB, on LEONARDO, MICRO, YUN, and other 32u4 based boards.
+  }
+
+  xTaskCreate(VocalSyncTask,"SyncroVocal", 128, NULL, 2, NULL);
+  xTaskCreate(NeoPixelTask,"NeoPixel", 128, NULL, 3, NULL);
+  xTaskCreate(ReadMsg, "CtrlNano", 128, NULL, 1, NULL);
 }
 
 
@@ -54,9 +57,8 @@ void loop()
 
 
 
-void VocalSyncTask(void *pvParameters)
+void VocalSyncTask(void *pvParameters __attribute__((unused)))
 {
-  (void)pvParameters;
   Servo myservo;                 
   int     MIN = 400; //value when sound is detected
   int     MAX = 1000;  //max value when sound is detected
@@ -121,31 +123,33 @@ void VocalSyncTask(void *pvParameters)
 
 
 
-void NeoPixelTask(void *pvParameters)
+void NeoPixelTask(void *pvParameters __attribute__((unused)))
 {
-  (void)pvParameters;
   for(;;)
   {
-    
+    vTaskDelay(1);
   }
 }
 
 
 
  
-void ReadMsg(void *pvParameters)
+void ReadMsg(void *pvParameters __attribute__((unused)))
 {
-
-  //String order;
-  //Ctx_order order_data;
-  int byteCounter = 0;
-  int msg_size = 0;
- (void)pvParameters;
-  
   //for process FreeRTOS
   for(;;)
   {
-    int bytesAvailable = Serial.available();
+    Serial.println(F("ReadMsg"));
+    vTaskDelay(1);
+  }
+}
+
+
+void receiveMsg()
+{
+  int msg_size = 0;
+  int byteCounter = 0;
+  int bytesAvailable = Serial.available();
     if(bytesAvailable>0)
     {
       for (int i = 0; i < bytesAvailable; i++) 
@@ -177,15 +181,12 @@ void ReadMsg(void *pvParameters)
           recvBuffer[byteCounter - 3] = receiveByte;
         }
 
-
-
       }
     }
-  }
 }
 
 
-void parseOrder(String ord,Ctx_order* order_data)
+void processMsg(String ord,Ctx_order* order_data)
 {
   String part1; // nb leds
   String part2; // mode d'allumage
