@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.py": "python",
+        "inmoovpixel.h": "c"
+    }
+}

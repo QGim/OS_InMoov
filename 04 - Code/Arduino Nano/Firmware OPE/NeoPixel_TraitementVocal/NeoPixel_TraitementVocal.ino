@@ -2,12 +2,14 @@
 #include <queue.h>
 #include <Servo.h> 
 #include "status.h"
-#include "order.h"
 #include "MsgCodec.h"
+#include "InMoovPixel.h"
 
 #define MAXMESSAGE 100
 #define servoMouthPin 6
 #define HPPin_In A3
+
+ 
 
 /*
  Ajout des prototypes des taches RTOS
@@ -16,11 +18,16 @@ void VocalSyncTask(void *pvParameters);
 void NeoPixelTask(void *pvParameters);
 void ReadMsg(void *pvParameters);
 
+/*Handle des taches*/
+TaskHandle_t Handle_Vocal_sync;
+TaskHandle_t Handle_Neo_Pixel;
+TaskHandle_t Handle_Read_Msg;
 
+/*Déclaring buffer*/
+byte recv_cmd_Buffer[MAX_MSG_SIZE];
+/*Declaring Queue*/
+QueueHandle_t NeoPixel_Queue;
 
-//Sturcture corespondant aux ordres
-struct Ctx_order order_data;
-byte recvBuffer[MAX_MSG_SIZE];
 
 //Setup des trois taches :
 /*
@@ -37,28 +44,35 @@ Permet de creer un parser permettant de recuperer les ordres par la raspberry
 */
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
+  //crete queue for task
+  NeoPixel_Queue = xQueueCreate(10,sizeof(Neo_Pixel_Info_s));
 
-while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB, on LEONARDO, MICRO, YUN, and other 32u4 based boards.
+
+  if(NeoPixel_Queue !=NULL)
+  {
+    xTaskCreate(NeoPixelTask,"NeoPixel", 128, NULL, 2, &Handle_Neo_Pixel);
+    xTaskCreate(ReadMsg, "CtrlNano", 128, NULL, 3, &Handle_Read_Msg);
   }
-
-  xTaskCreate(VocalSyncTask,"SyncroVocal", 128, NULL, 2, NULL);
-  xTaskCreate(NeoPixelTask,"NeoPixel", 128, NULL, 3, NULL);
-  xTaskCreate(ReadMsg, "CtrlNano", 128, NULL, 1, NULL);
+  xTaskCreate(VocalSyncTask,"SyncroVocal", 128, NULL, 1, &Handle_Vocal_sync);
+  
+  vTaskStartScheduler();
 }
 
 
 
 void loop()
 {
+  delay(1000);
 }
 
 
 
 
-void VocalSyncTask(void *pvParameters __attribute__((unused)))
+void VocalSyncTask(void *pvParameters)
 {
+  (void) pvParameters;
+
   Servo myservo;                 
   int     MIN = 400; //value when sound is detected
   int     MAX = 1000;  //max value when sound is detected
@@ -76,7 +90,7 @@ void VocalSyncTask(void *pvParameters __attribute__((unused)))
   analogReference(INTERNAL);
   myservo.attach(servoMouthPin);
   myservo.write(posMin);
-  for(;;)
+  for (;;)
   {
     val = analogRead(HPPin_In);
     pos=map(val, MIN, MAX, posMin, posMax); 
@@ -123,30 +137,45 @@ void VocalSyncTask(void *pvParameters __attribute__((unused)))
 
 
 
-void NeoPixelTask(void *pvParameters __attribute__((unused)))
+void NeoPixelTask(void *pvParameters)
 {
-  for(;;)
+  (void) pvParameters;
+  Neo_Pixel_Info_s neoStruct_receive;
+  //Pixel_Init();
+  for (;;)
   {
-    vTaskDelay(1);
+     if (xQueueReceive(NeoPixel_Queue, &neoStruct_receive, portMAX_DELAY) == pdPASS)
+    {
+
+    }
   }
 }
 
 
 
  
-void ReadMsg(void *pvParameters __attribute__((unused)))
+void ReadMsg(void *pvParameters)
 {
+  (void) pvParameters;
+  ETAT etat;
   //for process FreeRTOS
-  for(;;)
+  for (;;)
   {
-    Serial.println(F("ReadMsg"));
-    vTaskDelay(1);
+    etat = receiveMsg();
+    Serial.println(etat);
+    if(etat == ETAT_OK)
+    {
+      processMsg();
+    }
+    vTaskDelay(500/portTICK_PERIOD_MS);
   }
 }
 
 
-void receiveMsg()
+ETAT receiveMsg()
 {
+  ETAT etat;
+  etat = ETAT_ERROR;
   int msg_size = 0;
   int byteCounter = 0;
   int bytesAvailable = Serial.available();
@@ -157,13 +186,12 @@ void receiveMsg()
         // read the incoming values
         unsigned char receiveByte = Serial.read();
         ++byteCounter;
-        // Verifier si le premier byte est le MAGIC_NUMBER
-        if(byteCounter == 1 && receiveByte != MAGIC_NUMBER)
+        // Verifier si le premier octet est le MAGIC_NUMBER
+        if((byteCounter == 1) && (receiveByte != MAGIC_NUMBER))
         {
           byteCounter = 0;
-          Serial.print(ETAT_ESERIAL);
+          etat = ETAT_ESERIAL;
         }
-
         if (byteCounter == 2) 
         {
 				// recuperation de la taille du message
@@ -171,53 +199,64 @@ void receiveMsg()
           if (receiveByte > MAX_MSG_SIZE) 
           {
             byteCounter = 0;
-            Serial.print(ETAT_ESERIAL);
+            etat = ETAT_ESERIAL;
             continue;
           }
 				  msg_size = receiveByte;
         }
         if (byteCounter > 2)
         {
-          recvBuffer[byteCounter - 3] = receiveByte;
+          recv_cmd_Buffer[byteCounter - 3] = receiveByte;
         }
-
+        if (byteCounter == 2 + msg_size) 
+        {
+				  byteCounter = 0;
+          etat = ETAT_OK;
+        }
       }
     }
+    return etat;
 }
 
 
-void processMsg(String ord,Ctx_order* order_data)
+void processMsg()
 {
-  String part1; // nb leds
-  String part2; // mode d'allumage
-  String part3; // Nb params
+  //decode process for arduino nano
+  ETAT etat;
+  etat = ETAT_OK;
+  int start_index = 0;
+  int fonction = recv_cmd_Buffer[0];
+  Neo_Pixel_Info_s neoStruct_send;
+  switch (fonction)
+  {
+  case NEO_PIXEL_SET_ANIMATION:
+    neoStruct_send.func = NEO_PIXEL_SET_ANIMATION;
+    neoStruct_send.animation = recv_cmd_Buffer[start_index+1];
+    start_index+=1; //u8
+    neoStruct_send.red = recv_cmd_Buffer[start_index+1];
+    start_index+=1; //u8
+    neoStruct_send.green = recv_cmd_Buffer[start_index+1];
+    start_index+=1; //u8
+    neoStruct_send.blue = recv_cmd_Buffer[start_index+1];
+    start_index+=1; //u8
+    neoStruct_send.speed= to_b16(recv_cmd_Buffer,start_index+1);
+    start_index+=2; //u16
+    xQueueSend(NeoPixel_Queue,&neoStruct_send,portMAX_DELAY);
+    break;
 
-  part1 = ord.substring(0,ord.indexOf(" "));
-  int nb_leds = part1.toInt();
- 
-  part2 = ord.substring(ord.indexOf(" ") + 1);
-  part3 = ord.substring(ord.indexOf(" ") + 1);
+  case NEO_PIXEL_WRITE_MATRIX:
+    
+    break;
 
-  if(nb_leds == 0) // Attention si aucune led selectionné ->mode eteint par default et mode forcé à 0
-  {
-    order_data->nb_leds= nb_leds;
-    order_data->mode = 0;
+  default:
+    etat = ETAT_EPARAM;
+    Serial.println("Fonction NeoPixel innconnu");
+    break;
   }
-  else if(nb_leds > 0) //Tout est prix en compte
-  {
-    order_data->nb_leds = nb_leds;
-    
-    int mode = part2.toInt();
-    order_data->mode = mode;
 
-    
-  }
-  else if(nb_leds < 0) // erreurs params (ERANGE)
-  {
-    
-  }
-  else //Commande Inconnu
-  {
-    
-  }
+}
+
+int to_b16( byte* buff,  int index)
+{
+    return (buff[index]<<8)+buff[index+1];
 }

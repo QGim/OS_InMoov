@@ -18,7 +18,6 @@
     []			byte[], size			int[]							variable length
 
  All message editing should be done in the arduinoMsg.schema
-
  The binary wire format of an Arduino is:
 
  MAGIC_NUMBER|MSG_SIZE|METHOD_NUMBER|PARAM0|PARAM1 ...
