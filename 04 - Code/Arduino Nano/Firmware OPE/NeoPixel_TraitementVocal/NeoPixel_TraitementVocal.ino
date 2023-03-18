@@ -141,12 +141,19 @@ void NeoPixelTask(void *pvParameters)
 {
   (void) pvParameters;
   Neo_Pixel_Info_s neoStruct_receive;
-  //Pixel_Init();
+  Pixel_init();
   for (;;)
   {
      if (xQueueReceive(NeoPixel_Queue, &neoStruct_receive, portMAX_DELAY) == pdPASS)
     {
+      switch(neoStruct_receive.func)
+      {
+        case NEO_PIXEL_SET_ANIMATION:
+        break;
 
+        case NEO_PIXEL_WRITE_MATRIX:
+        break;
+      }
     }
   }
 }

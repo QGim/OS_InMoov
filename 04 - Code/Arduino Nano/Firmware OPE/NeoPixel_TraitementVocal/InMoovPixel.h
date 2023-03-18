@@ -19,5 +19,7 @@
 
 
 extern void Pixel_init();
+extern void Pixel_clear();
+
 
 #endif

@@ -11,3 +11,8 @@ void Pixel_init()
   strip.begin();
   strip.show();
 }
+
+void Pixel_clear()
+{
+  strip.clear();
+}
