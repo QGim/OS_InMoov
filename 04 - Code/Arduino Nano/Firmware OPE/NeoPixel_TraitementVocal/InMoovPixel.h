@@ -3,7 +3,7 @@
 
 
 #define LED_PIN   9
-#define LED_COUNT 3
+#define LED_COUNT 15
 
 
 #define NEOPIXEL_ANIMATION_NO_ANIMATION 0
@@ -20,6 +20,18 @@
 
 extern void Pixel_init();
 extern void Pixel_clear();
+extern void Pixel_show();
+extern void Pixel_animation_Stop(struct Neo_Pixel_Info_s *neo_pix_ctx);
+extern void Pixel_animation_ColorWipe(struct Neo_Pixel_Info_s *neo_pix_ctx);
+extern void Pixel_animation_LarsonScanner(struct Neo_Pixel_Info_s *neo_pix_ctx);
+extern void Pixel_animation_TheaterChase(struct Neo_Pixel_Info_s *neo_pix_ctx);
+extern void Pixel_animation_Wheel(struct Neo_Pixel_Info_s *neo_pix_ctx);
+extern void Pixel_animation_TheaterChaseRainbow(struct Neo_Pixel_Info_s *neo_pix_ctx);
+extern void Pixel_animation_Rainbow(struct Neo_Pixel_Info_s *neo_pix_ctx);
+extern void Pixel_animation_RainbowCycle(struct Neo_Pixel_Info_s *neo_pix_ctx);
+extern void Pixel_animation_Flash_Random(struct Neo_Pixel_Info_s *neo_pix_ctx);
+extern void Pixel_animation_Iron_Man(struct Neo_Pixel_Info_s *neo_pix_ctx);
+
 
 
 #endif

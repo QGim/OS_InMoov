@@ -1,6 +1,6 @@
 #include <Arduino_FreeRTOS.h>
 #include <queue.h>
-#include <Servo.h> 
+#include <Servo.h>
 #include "status.h"
 #include "MsgCodec.h"
 #include "InMoovPixel.h"
@@ -8,8 +8,6 @@
 #define MAXMESSAGE 100
 #define servoMouthPin 6
 #define HPPin_In A3
-
- 
 
 /*
  Ajout des prototypes des taches RTOS
@@ -28,15 +26,14 @@ byte recv_cmd_Buffer[MAX_MSG_SIZE];
 /*Declaring Queue*/
 QueueHandle_t NeoPixel_Queue;
 
-
-//Setup des trois taches :
+// Setup des trois taches :
 /*
-Syncro vocal: 
-permet la syncro entre le signal vocal analogique 
+Syncro vocal:
+permet la syncro entre le signal vocal analogique
 en un signal PWM pour le servo qui bouge la bouche
 
-Néo Pixel : 
-Tache permetant d'allumer ou d'eteinde cercle de led 
+Néo Pixel :
+Tache permetant d'allumer ou d'eteinde cercle de led
 NéoPixel et traitants les ordres en provenance d'une queue.
 
 CtrlNano :
@@ -45,139 +42,157 @@ Permet de creer un parser permettant de recuperer les ordres par la raspberry
 void setup()
 {
   Serial.begin(115200);
-  //crete queue for task
-  NeoPixel_Queue = xQueueCreate(10,sizeof(Neo_Pixel_Info_s));
+  // crete queue for task
+  NeoPixel_Queue = xQueueCreate(10, sizeof(Neo_Pixel_Info_s));
 
-
-  if(NeoPixel_Queue !=NULL)
+  if (NeoPixel_Queue != NULL)
   {
-    xTaskCreate(NeoPixelTask,"NeoPixel", 128, NULL, 2, &Handle_Neo_Pixel);
+    xTaskCreate(NeoPixelTask, "NeoPixel", 128, NULL, 2, &Handle_Neo_Pixel);
     xTaskCreate(ReadMsg, "CtrlNano", 128, NULL, 3, &Handle_Read_Msg);
   }
-  xTaskCreate(VocalSyncTask,"SyncroVocal", 128, NULL, 1, &Handle_Vocal_sync);
-  
+  xTaskCreate(VocalSyncTask, "SyncroVocal", 128, NULL, 1, &Handle_Vocal_sync);
+
   vTaskStartScheduler();
 }
-
-
 
 void loop()
 {
   delay(1000);
 }
 
-
-
-
 void VocalSyncTask(void *pvParameters)
 {
-  (void) pvParameters;
+  (void)pvParameters;
 
-  Servo myservo;                 
-  int     MIN = 400; //value when sound is detected
-  int     MAX = 1000;  //max value when sound is detected
-  int     SecondDetection = 2; 
-  int     val = 0;    
-  int     i = 0;
-  int     posMax = 145;    
-  int     posMin = 60;
-  int     pos = posMin; 
-  int     BoucheStatus = 0;
-  int     ActionBouche = 0;
-  int     Repos = 0;
-  int     CompteurRepos = 0;
-  String  dbg;
+  Servo myservo;
+  int MIN = 400;  // value when sound is detected
+  int MAX = 1000; // max value when sound is detected
+  int SecondDetection = 2;
+  int val = 0;
+  int i = 0;
+  int posMax = 145;
+  int posMin = 60;
+  int pos = posMin;
+  int BoucheStatus = 0;
+  int ActionBouche = 0;
+  int Repos = 0;
+  int CompteurRepos = 0;
+  String dbg;
   analogReference(INTERNAL);
   myservo.attach(servoMouthPin);
   myservo.write(posMin);
   for (;;)
   {
     val = analogRead(HPPin_In);
-    pos=map(val, MIN, MAX, posMin, posMax); 
-    if (val > MIN ) // if values detected : speaker voltage
+    pos = map(val, MIN, MAX, posMin, posMax);
+    if (val > MIN) // if values detected : speaker voltage
     {
       i++;
     }
-    else  
+    else
     {
-     BoucheStatus = 1; // closed mouth
+      BoucheStatus = 1; // closed mouth
     }
-    if (i>=SecondDetection)
+    if (i >= SecondDetection)
     {
-      i=0;
+      i = 0;
       BoucheStatus = 0;
     }
     if (BoucheStatus == 0 && ActionBouche == 0)
     {
-      if (Repos==0)
+      if (Repos == 0)
       {
         delay(0.5);
       }
       ActionBouche = 1;
       myservo.write(pos);
-      CompteurRepos=0;
+      CompteurRepos = 0;
       delay(0.1);
     }
     if (BoucheStatus == 1 && ActionBouche == 1)
     {
       Repos = 0;
       CompteurRepos = 0;
-      ActionBouche =0;
+      ActionBouche = 0;
     }
     if (CompteurRepos == 100 && Repos == 0)
     {
-     myservo.write(posMin); 
-     Repos=1;
+      myservo.write(posMin);
+      Repos = 1;
     }
-    CompteurRepos+=1;    
+    CompteurRepos += 1;
     delay(1);
   }
 }
 
-
-
-
 void NeoPixelTask(void *pvParameters)
 {
-  (void) pvParameters;
+  (void)pvParameters;
   Neo_Pixel_Info_s neoStruct_receive;
   Pixel_init();
   for (;;)
   {
-     if (xQueueReceive(NeoPixel_Queue, &neoStruct_receive, portMAX_DELAY) == pdPASS)
+    if (xQueueReceive(NeoPixel_Queue, &neoStruct_receive, portMAX_DELAY) == pdPASS)
     {
-      switch(neoStruct_receive.func)
+      switch (neoStruct_receive.func)
       {
-        case NEO_PIXEL_SET_ANIMATION:
-        break;
+      case NEO_PIXEL_SET_ANIMATION:
+        switch (neoStruct_receive.animation)
+        {
+        case NEOPIXEL_ANIMATION_NO_ANIMATION:
+          break;
+        case NEOPIXEL_ANIMATION_STOP:
+          break;
+        case NEOPIXEL_ANIMATION_COLOR_WIPE:
+          break;
+        case NEOPIXEL_ANIMATION_LARSON_SCANNER:
+          break;
+        case NEOPIXEL_ANIMATION_THEATER_CHASE:
+          break;
+        case NEOPIXEL_ANIMATION_THEATER_CHASE_RAINBOW:
+          break;
+        case NEOPIXEL_ANIMATION_RAINBOW:
+          break;
+        case NEOPIXEL_ANIMATION_RAINBOW_CYCLE:
+          break;
+        case NEOPIXEL_ANIMATION_FLASH_RANDOM:
+          Pixel_animation_Flash_Random(&neoStruct_receive);
+          break;
+        case NEOPIXEL_ANIMATION_IRONMAN:
+          Pixel_animation_Iron_Man(&neoStruct_receive);
+          break;
+        default:
+          Serial.println("Neopixel animation do not exist");
+          break;
+        }
+        if (neoStruct_receive.newData)
+        {
+          Pixel_show();
+        }
 
-        case NEO_PIXEL_WRITE_MATRIX:
+      case NEO_PIXEL_WRITE_MATRIX:
         break;
       }
     }
   }
 }
 
-
-
- 
 void ReadMsg(void *pvParameters)
 {
-  (void) pvParameters;
+  (void)pvParameters;
   ETAT etat;
-  //for process FreeRTOS
+  // for process FreeRTOS
   for (;;)
   {
     etat = receiveMsg();
     Serial.println(etat);
-    if(etat == ETAT_OK)
+    if (etat == ETAT_OK)
     {
       processMsg();
     }
-    vTaskDelay(500/portTICK_PERIOD_MS);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
   }
 }
-
 
 ETAT receiveMsg()
 {
@@ -186,49 +201,48 @@ ETAT receiveMsg()
   int msg_size = 0;
   int byteCounter = 0;
   int bytesAvailable = Serial.available();
-    if(bytesAvailable>0)
+  if (bytesAvailable > 0)
+  {
+    for (int i = 0; i < bytesAvailable; i++)
     {
-      for (int i = 0; i < bytesAvailable; i++) 
+      // read the incoming values
+      unsigned char receiveByte = Serial.read();
+      ++byteCounter;
+      // Verifier si le premier octet est le MAGIC_NUMBER
+      if ((byteCounter == 1) && (receiveByte != MAGIC_NUMBER))
       {
-        // read the incoming values
-        unsigned char receiveByte = Serial.read();
-        ++byteCounter;
-        // Verifier si le premier octet est le MAGIC_NUMBER
-        if((byteCounter == 1) && (receiveByte != MAGIC_NUMBER))
+        byteCounter = 0;
+        etat = ETAT_ESERIAL;
+      }
+      if (byteCounter == 2)
+      {
+        // recuperation de la taille du message
+        // verification si le message est superieur à 64
+        if (receiveByte > MAX_MSG_SIZE)
         {
           byteCounter = 0;
           etat = ETAT_ESERIAL;
+          continue;
         }
-        if (byteCounter == 2) 
-        {
-				// recuperation de la taille du message
-				// verification si le message est superieur à 64
-          if (receiveByte > MAX_MSG_SIZE) 
-          {
-            byteCounter = 0;
-            etat = ETAT_ESERIAL;
-            continue;
-          }
-				  msg_size = receiveByte;
-        }
-        if (byteCounter > 2)
-        {
-          recv_cmd_Buffer[byteCounter - 3] = receiveByte;
-        }
-        if (byteCounter == 2 + msg_size) 
-        {
-				  byteCounter = 0;
-          etat = ETAT_OK;
-        }
+        msg_size = receiveByte;
+      }
+      if (byteCounter > 2)
+      {
+        recv_cmd_Buffer[byteCounter - 3] = receiveByte;
+      }
+      if (byteCounter == 2 + msg_size)
+      {
+        byteCounter = 0;
+        etat = ETAT_OK;
       }
     }
-    return etat;
+  }
+  return etat;
 }
-
 
 void processMsg()
 {
-  //decode process for arduino nano
+  // decode process for arduino nano
   ETAT etat;
   etat = ETAT_OK;
   int start_index = 0;
@@ -238,21 +252,21 @@ void processMsg()
   {
   case NEO_PIXEL_SET_ANIMATION:
     neoStruct_send.func = NEO_PIXEL_SET_ANIMATION;
-    neoStruct_send.animation = recv_cmd_Buffer[start_index+1];
-    start_index+=1; //u8
-    neoStruct_send.red = recv_cmd_Buffer[start_index+1];
-    start_index+=1; //u8
-    neoStruct_send.green = recv_cmd_Buffer[start_index+1];
-    start_index+=1; //u8
-    neoStruct_send.blue = recv_cmd_Buffer[start_index+1];
-    start_index+=1; //u8
-    neoStruct_send.speed= to_b16(recv_cmd_Buffer,start_index+1);
-    start_index+=2; //u16
-    xQueueSend(NeoPixel_Queue,&neoStruct_send,portMAX_DELAY);
+    neoStruct_send.animation = recv_cmd_Buffer[start_index + 1];
+    start_index += 1; // u8
+    neoStruct_send.red = recv_cmd_Buffer[start_index + 1];
+    start_index += 1; // u8
+    neoStruct_send.green = recv_cmd_Buffer[start_index + 1];
+    start_index += 1; // u8
+    neoStruct_send.blue = recv_cmd_Buffer[start_index + 1];
+    start_index += 1; // u8
+    neoStruct_send.speed = to_b16(recv_cmd_Buffer, start_index + 1);
+    start_index += 2; // u16
+    xQueueSend(NeoPixel_Queue, &neoStruct_send, portMAX_DELAY);
     break;
 
   case NEO_PIXEL_WRITE_MATRIX:
-    
+
     break;
 
   default:
@@ -260,10 +274,9 @@ void processMsg()
     Serial.println("Fonction NeoPixel innconnu");
     break;
   }
-
 }
 
-int to_b16( byte* buff,  int index)
+int to_b16(byte *buff, int index)
 {
-    return (buff[index]<<8)+buff[index+1];
+  return (buff[index] << 8) + buff[index + 1];
 }

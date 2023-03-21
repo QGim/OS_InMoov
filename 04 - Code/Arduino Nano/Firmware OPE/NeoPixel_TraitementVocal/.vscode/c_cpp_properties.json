@@ -5,7 +5,8 @@
             "name": "Arduino",
             "compilerPath": "C:\\Users\\Quentin\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\avr-gcc\\7.3.0-atmel3.6.1-arduino7\\bin\\avr-g++",
             "compilerArgs": [
-                "-w",
+                "-Wall",
+                "-Wextra",
                 "-std=gnu++11",
                 "-fpermissive",
                 "-fno-exceptions",
@@ -19,7 +20,7 @@
                 "C:\\Users\\Quentin\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.6\\cores\\arduino",
                 "C:\\Users\\Quentin\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.6\\variants\\eightanaloginputs",
                 "C:\\Users\\Quentin\\Documents\\Arduino\\libraries\\FreeRTOS\\src",
-                "C:\\Users\\Quentin\\Documents\\Arduino\\libraries\\Servo\\src",
+                "D:\\Arduino\\libraries\\Servo\\src",
                 "C:\\Users\\Quentin\\Documents\\Arduino\\libraries\\Adafruit_NeoPixel",
                 "c:\\users\\quentin\\appdata\\local\\arduino15\\packages\\arduino\\tools\\avr-gcc\\7.3.0-atmel3.6.1-arduino7\\lib\\gcc\\avr\\7.3.0\\include",
                 "c:\\users\\quentin\\appdata\\local\\arduino15\\packages\\arduino\\tools\\avr-gcc\\7.3.0-atmel3.6.1-arduino7\\lib\\gcc\\avr\\7.3.0\\include-fixed",
@@ -32,7 +33,7 @@
             "cppStandard": "c++11",
             "defines": [
                 "F_CPU=16000000L",
-                "ARDUINO=10607",
+                "ARDUINO=10819",
                 "ARDUINO_AVR_NANO",
                 "ARDUINO_ARCH_AVR",
                 "__DBL_MIN_EXP__=(-125)",
