@@ -43,7 +43,7 @@ void setup()
 {
   Serial.begin(115200);
   // crete queue for task
-  NeoPixel_Queue = xQueueCreate(10, sizeof(Neo_Pixel_Info_s));
+  NeoPixel_Queue = xQueueCreate(15, sizeof(Neo_Pixel_Info_s));
 
   if (NeoPixel_Queue != NULL)
   {
@@ -130,6 +130,7 @@ void NeoPixelTask(void *pvParameters)
   (void)pvParameters;
   Neo_Pixel_Info_s neoStruct_receive;
   Pixel_init();
+
   for (;;)
   {
     if (xQueueReceive(NeoPixel_Queue, &neoStruct_receive, portMAX_DELAY) == pdPASS)
@@ -137,42 +138,14 @@ void NeoPixelTask(void *pvParameters)
       switch (neoStruct_receive.func)
       {
       case NEO_PIXEL_SET_ANIMATION:
-        switch (neoStruct_receive.animation)
-        {
-        case NEOPIXEL_ANIMATION_NO_ANIMATION:
-          break;
-        case NEOPIXEL_ANIMATION_STOP:
-          break;
-        case NEOPIXEL_ANIMATION_COLOR_WIPE:
-          break;
-        case NEOPIXEL_ANIMATION_LARSON_SCANNER:
-          break;
-        case NEOPIXEL_ANIMATION_THEATER_CHASE:
-          break;
-        case NEOPIXEL_ANIMATION_THEATER_CHASE_RAINBOW:
-          break;
-        case NEOPIXEL_ANIMATION_RAINBOW:
-          break;
-        case NEOPIXEL_ANIMATION_RAINBOW_CYCLE:
-          break;
-        case NEOPIXEL_ANIMATION_FLASH_RANDOM:
-          Pixel_animation_Flash_Random(&neoStruct_receive);
-          break;
-        case NEOPIXEL_ANIMATION_IRONMAN:
-          Pixel_animation_Iron_Man(&neoStruct_receive);
-          break;
-        default:
-          Serial.println("Neopixel animation do not exist");
-          break;
-        }
-        if (neoStruct_receive.newData)
-        {
-          Pixel_show();
-        }
-
+        Pixel_Update_struct_animation(&neoStruct_receive);
+        break;
+        
       case NEO_PIXEL_WRITE_MATRIX:
+        Pixel_write_on_Matrix(&neoStruct_receive);
         break;
       }
+      Pixel_animation_Update();
     }
   }
 }
@@ -266,7 +239,11 @@ void processMsg()
     break;
 
   case NEO_PIXEL_WRITE_MATRIX:
-
+    neoStruct_send.func = NEO_PIXEL_WRITE_MATRIX;
+    neoStruct_send.buffer = recv_cmd_Buffer+start_index+2;
+    neoStruct_send.bufferSize=recv_cmd_Buffer[start_index+1];
+    start_index +=1 + recv_cmd_Buffer[start_index+1];
+    xQueueSend(NeoPixel_Queue,&neoStruct_send,portMAX_DELAY);
     break;
 
   default:
@@ -280,3 +257,5 @@ int to_b16(byte *buff, int index)
 {
   return (buff[index] << 8) + buff[index + 1];
 }
+
+

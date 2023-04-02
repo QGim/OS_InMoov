@@ -19,19 +19,14 @@
 
 struct Neo_Pixel_Info_s
 {
-    byte  func = 0;
-    byte  animation = 0;
-    byte  red = 0;
-    byte  green = 0;
-    byte  blue = 0;
-    int   speed = 0;
-    byte  position = 1;
-    byte  count = 0;
-    bool  off = false;
-	byte  direction = 1;
-	byte  step = 1;
-	byte  alpha = 50;
-	bool  newData = true;
+    byte  func;
+    byte  animation;
+    byte  red;
+    byte  green;
+    byte  blue;
+    int   speed;
+    byte  bufferSize;
+    byte * buffer;
 };
  
 #endif
