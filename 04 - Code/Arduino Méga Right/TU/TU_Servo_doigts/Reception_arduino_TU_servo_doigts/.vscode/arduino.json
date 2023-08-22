@@ -1,0 +1,7 @@
+{
+    "port": "COM6",
+    "board": "arduino:avr:mega",
+    "configuration": "cpu=atmega2560",
+    "programmer": "avrispmkii",
+    "sketch": "Reception_arduino_TU_servo_doigts.ino"
+}

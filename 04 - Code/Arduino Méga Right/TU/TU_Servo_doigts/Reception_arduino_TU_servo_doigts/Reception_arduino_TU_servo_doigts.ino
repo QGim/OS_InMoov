@@ -29,27 +29,27 @@ void loop()
     switch(commandChar)
     {
       case'a':
-      //Serial.println(subvalue2.toInt());
+      Serial.println(subvalue2.toInt());
       pouce.write(subvalue2.toInt());
       break;
       case'b':
-      //Serial.println(subvalue2.toInt());
+      Serial.println(subvalue2.toInt());
       index.write(subvalue2.toInt());
       break;
       case'c':
-      //Serial.println(subvalue2.toInt());
+      Serial.println(subvalue2.toInt());
       maj.write(subvalue2.toInt());
       break;
       case'd':
-      //Serial.println(subvalue2.toInt());
+      Serial.println(subvalue2.toInt());
       annu.write(subvalue2.toInt());
       break;
       case'e':
-      //Serial.println(subvalue2.toInt());
+      Serial.println(subvalue2.toInt());
       auri.write(subvalue2.toInt());
       break;
       case'f':
-      //Serial.println(subvalue2.toInt());
+      Serial.println(subvalue2.toInt());
       poignet.write(subvalue2.toInt());
       break;
     }

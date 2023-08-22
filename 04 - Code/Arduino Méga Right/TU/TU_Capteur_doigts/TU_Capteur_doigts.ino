@@ -6,11 +6,12 @@ Index : A13
 Majeur: A12
 Annu  : A11
 Auri  : A10
+Dispo : A9,A8
 */
 
 #define NB_CAPTEURS 5
 
-int ports_capteurs[NB_CAPTEURS] = {A14,A13,A12,A11,A10};
+int ports_capteurs[NB_CAPTEURS] = {A4,A3,A2,A1,A0};
 int value_capteurs[NB_CAPTEURS] = {};
 int min_values[NB_CAPTEURS] = {50,50,50,50,50};
 int max_values[NB_CAPTEURS] = {50,50,50,50,50};
@@ -18,7 +19,7 @@ String spacer = " : ";
 
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(115200); 
 }
 
 void loop() {
