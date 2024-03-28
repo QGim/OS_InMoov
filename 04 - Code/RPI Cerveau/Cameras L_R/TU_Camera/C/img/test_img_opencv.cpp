@@ -10,7 +10,7 @@ int main(int argc, char** argv)
  //Read the file
  Mat image = imread("456498.jpg");
  //Name of the window
- String windowsName = "test_img";
+ String windowsName = "test_img_quentin";
 
  //Check image error
  if(image.empty())
