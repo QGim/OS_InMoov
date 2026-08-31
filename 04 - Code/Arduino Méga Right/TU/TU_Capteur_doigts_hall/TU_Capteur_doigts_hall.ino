@@ -8,7 +8,7 @@ Annu  : A11
 Auri  : A10
 */
 
-#define Hall_Sensor_Pin A13
+#define Hall_Sensor_Pin A0
 
 void setup() {
   pinMode(Hall_Sensor_Pin,INPUT);
@@ -18,6 +18,6 @@ void setup() {
 void loop() {
   float voltage;
   voltage = analogRead(Hall_Sensor_Pin);
-  Serial.println(voltage);
+  Serial.println(abs(voltage));
   delay(50);
 }
